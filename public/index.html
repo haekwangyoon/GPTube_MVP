@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>GPTube 실시간 방송 MVP</title>
+  <style>
+    body{background:#f5f7fb;color:#111;font-family:system-ui,Segoe UI,sans-serif;margin:0}
+    h1{color:#2563eb;margin:14px 16px}
+    .wrap{max-width:1100px;margin:0 auto;padding:0 12px 24px}
+    .toolbar{display:flex;gap:8px;align-items:center;margin:8px 0 12px}
+    .toolbar .left{display:flex;gap:8px;align-items:center}
+    input,button{padding:8px 12px;border-radius:8px;border:1px solid #cbd5e1;background:#fff}
+    input{min-width:180px}
+    button{background:#2563eb;color:#fff;border-color:#1e40af;cursor:pointer}
+    button:hover{filter:brightness(1.05)}
+    .stage{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .pane{position:relative;background:#0b0b0b;border:1px solid #334155;border-radius:10px;padding:10px;height:min(38vh,420px)}
+    video{width:100%;height:100%;background:#111;border:2px solid #9ec5ff;border-radius:10px;object-fit:cover}
+    .pane h3{position:absolute;top:8px;left:12px;margin:0;color:#cbd5e1;font-size:13px}
+    .badge{background:#1e293b;color:#9ec5ff;border:1px solid #334155;padding:4px 8px;border-radius:12px;font-size:12px}
+    /* 채팅 */
+    #chatContainer{margin-top:12px}
+    #chatBox{height:180px;overflow-y:auto;background:#111;color:#eee;border:1px solid #334155;border-radius:8px;padding:8px}
+    #chatInput{width:70%}
+    .chat-message{background:#f5f7fb;color:#111;margin:6px 0;padding:6px 10px;border-radius:8px;font-size:14px}
+    .hint{opacity:.8;margin-top:8px}
+    /* 이모지 오버레이 */
+    .overlay{pointer-events:none;position:absolute;inset:0}
+    .emoji{position:absolute;font-size:38px;animation:rise 1.2s ease-out forwards}
+    @keyframes rise{0%{transform:translateY(10px);opacity:.95}100%{transform:translateY(-60px);opacity:0}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>🎥 GPTube <b>실시간 방송</b> MVP</h1>
+
+    <div class="toolbar">
+      <div class="left">
+        <input id="nickInput" type="text" placeholder="닉네임 (예: haekwang)" />
+        <input id="roomInput" type="text" placeholder="방 코드 (예: test123)" />
+        <button id="joinBtn">방 만들기/입장</button>
+        <button id="leaveBtn">나가기</button>
+      </div>
+      <span class="badge" id="statusBadge">대기 중</span>
+      <div style="flex:1"></div>
+      <button id="muteBtn">음소거</button>
+      <button id="switchCamBtn">카메라 끄기</button>
+      <button id="shareBtn">화면 공유</button>
+    </div>
+
+    <div class="stage">
+      <div class="pane">
+        <h3>내 화면</h3>
+        <div class="overlay" id="overlayLocal"></div>
+        <video id="localVideo" autoplay playsinline muted></video>
+      </div>
+      <div class="pane">
+        <h3>상대 화면</h3>
+        <div class="overlay" id="overlayRemote"></div>
+        <video id="remoteVideo" autoplay playsinline></video>
+      </div>
+    </div>
+
+    <!-- 이모지 리액션 -->
+    <div class="toolbar" style="margin-top:10px">
+      <span class="badge">리액션:</span>
+      <button class="react" data-emoji="👍">👍</button>
+      <button class="react" data-emoji="❤️">❤️</button>
+      <button class="react" data-emoji="😂">😂</button>
+      <button class="react" data-emoji="🎉">🎉</button>
+    </div>
+
+    <!-- 채팅 -->
+    <div id="chatContainer">
+      <h3>💬 실시간 채팅</h3>
+      <div id="chatBox"></div>
+      <div class="toolbar">
+        <input id="chatInput" type="text" placeholder="메시지를 입력하세요" />
+        <button id="sendBtn">보내기</button>
+      </div>
+      <div class="hint">같은 방 코드로 두 기기(또는 두 브라우저 탭)에서 접속하면 연결됩니다.</div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="client.js"></script>
+</body>
+</html>

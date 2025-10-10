@@ -1,0 +1,10 @@
+* { box-sizing: border-box; font-family: system-ui, sans-serif; }
+body { margin: 0; padding: 16px; }
+header { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+input, button, select { padding: 8px; }
+#videos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+video { width: 100%; background: #000; border-radius: 12px; }
+.controls { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.badge { padding: 2px 8px; border-radius: 999px; background: #eef; }
+#chat { border: 1px solid #ddd; border-radius: 12px; padding: 8px; max-width: 480px; }
+#chatlog { height: 160px; overflow-y: auto; border: 1px solid #ccc; border-radius: 8px; padding: 8px; margin-bottom: 8px; white-space: pre-wrap; }
