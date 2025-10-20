@@ -1,17 +1,32 @@
 // server.js
 const express = require('express');
-const path = require('path');
+const http = require('http');
+const { Server } = require('socket.io');
 
 const app = express();
 
-// /public 폴더 정적 파일 (선택)
-app.use(express.static(path.join(__dirname, 'public')));
-
-// 루트 응답 (상태 확인용)
+// 루트 확인용 (Vercel “GET /” 에러 방지)
 app.get('/', (req, res) => {
-  res.send('✅ GPTube MVP 서버가 정상 작동 중입니다! (Vercel Serverless OK)');
+  res.send('✅ GPTube MVP 서버가 정상 작동 중입니다!');
 });
 
-// Vercel의 Node 런타임은 서버 객체가 아니라 "핸들러"를 기대하니
-// app 자체를 내보냅니다.
-module.exports = app;
+// 서버 및 Socket.IO 설정
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: '*' } });
+
+io.on('connection', (socket) => {
+  console.log('✅ 사용자 연결됨:', socket.id);
+
+  socket.on('join', (roomId, nickname) => {
+    socket.join(roomId);
+    socket.data.nickname = nickname || `게스트-${socket.id.slice(0, 4)}`;
+    io.to(roomId).emit('system', { text: `${socket.data.nickname} 입장`, ts: Date.now() });
+  });
+
+  socket.on('disconnect', () => {
+    console.log('❌ 사용자 연결 종료:', socket.id);
+  });
+});
+
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => console.log(`🚀 Server listening on port ${PORT}`));
