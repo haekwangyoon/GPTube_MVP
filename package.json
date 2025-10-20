@@ -1,13 +1,12 @@
 {
-  "name": "webrtc-realtime",
+  "name": "gptube-mvp",
   "version": "1.0.0",
-  "description": "GPTube/집튜브 실시간 양방향 카메라 입력 MVP (WebRTC + Socket.IO)",
+  "private": true,
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.19.2",
-    "socket.io": "^4.7.5"
+    "express": "^4.18.2"
   }
 }
