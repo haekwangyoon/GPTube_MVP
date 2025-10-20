@@ -1,7 +1,7 @@
 {
   "name": "gptube_mvp",
   "version": "1.0.0",
-  "description": "GPTube MVP WebRTC + Chat Server",
+  "description": "GPTube MVP WebRTC + Socket.io Server",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
