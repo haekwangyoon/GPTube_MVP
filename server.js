@@ -2,47 +2,57 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const path = require('path');
 
 const app = express();
 
-// ✅ 루트 요청 응답 (Vercel "GET /" 오류 방지)
-app.get('/', (req, res) => {
-  res.status(200).send('✅ GPTube MVP 서버가 정상 작동 중입니다!');
+// --- CORS (간단 허용) ---
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  next();
 });
 
-// ✅ HTTP 서버 + Socket.IO 설정
+// --- 정적 파일 제공 (/public) ---
+app.use(express.static(path.join(__dirname, 'public')));
+
+// --- 루트 경로 응답: index.html ---
+app.get('/', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// --- HTTP + Socket.IO ---
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: { origin: '*' },
-});
+const io = new Server(server, { cors: { origin: '*' } });
 
-// ✅ 실시간 이벤트
+// 예시 이벤트(필요시 수정/추가)
 io.on('connection', (socket) => {
-  console.log('📡 연결됨:', socket.id);
-
   socket.on('join', (roomId, nickname) => {
     socket.join(roomId);
-    socket.data.nickname = nickname || `게스트-${socket.id.slice(0, 4)}`;
-    io.to(roomId).emit('system', {
-      text: `${socket.data.nickname} 님이 입장했습니다.`,
+    socket.data.nickname = nickname || `guest-${socket.id.slice(0, 4)}`;
+    socket.to(roomId).emit('system', {
+      text: `${socket.data.nickname} joined`,
       ts: Date.now(),
     });
   });
 
-  socket.on('message', (roomId, text) => {
+  socket.on('chat', (roomId, text) => {
     io.to(roomId).emit('chat', {
-      nickname: socket.data.nickname,
+      from: socket.data.nickname || 'anon',
       text,
       ts: Date.now(),
     });
   });
 
   socket.on('disconnect', () => {
-    console.log('❌ 연결 종료:', socket.id);
+    // 필요 시 정리 로직
   });
 });
 
+// --- 포트 바인딩(로컬/호스팅 환경 모두 호환) ---
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
-
-module.exports = app; // ✅ Vercel이 server.js를 함수처럼 인식하도록 필요
+server.listen(PORT, () => {
+  console.log(`Server listening on http://localhost:${PORT}`);
+});
