@@ -1,58 +1,59 @@
-// server.js
+// GPTube MVP Server (WebRTC + Socket.io)
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const path = require('path');
 
 const app = express();
 
-// --- CORS (간단 허용) ---
+// Enable CORS for testing
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept'
+  );
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   next();
 });
 
-// --- 정적 파일 제공 (/public) ---
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve static files from /public
+app.use(express.static('public'));
 
-// --- 루트 경로 응답: index.html ---
-app.get('/', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+// Root route
+app.get('/', (req, res) => {
+  res.send('✅ GPTube MVP server is running successfully.');
 });
 
-// --- HTTP + Socket.IO ---
+// HTTP server
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
-// 예시 이벤트(필요시 수정/추가)
+// Socket.io events
 io.on('connection', (socket) => {
-  socket.on('join', (roomId, nickname) => {
-    socket.join(roomId);
-    socket.data.nickname = nickname || `guest-${socket.id.slice(0, 4)}`;
-    socket.to(roomId).emit('system', {
-      text: `${socket.data.nickname} joined`,
-      ts: Date.now(),
+  console.log(`🟢 Connected: ${socket.id}`);
+
+  socket.on('join', (room, nickname) => {
+    socket.join(room);
+    socket.data.nickname = nickname || `Guest-${socket.id.slice(0, 4)}`;
+    socket.to(room).emit('system', {
+      text: `${socket.data.nickname} joined the room.`,
+      ts: Date.now()
     });
   });
 
-  socket.on('chat', (roomId, text) => {
-    io.to(roomId).emit('chat', {
-      from: socket.data.nickname || 'anon',
+  socket.on('message', (room, text) => {
+    io.to(room).emit('chat', {
+      nick: socket.data.nickname,
       text,
-      ts: Date.now(),
+      ts: Date.now()
     });
   });
 
   socket.on('disconnect', () => {
-    // 필요 시 정리 로직
+    console.log(`🔴 Disconnected: ${socket.id}`);
   });
 });
 
-// --- 포트 바인딩(로컬/호스팅 환경 모두 호환) ---
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
-  console.log(`Server listening on http://localhost:${PORT}`);
-});
+server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
