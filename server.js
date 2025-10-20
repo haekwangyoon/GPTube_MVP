@@ -4,6 +4,11 @@ const http = require('http');
 const { Server } = require('socket.io');
 
 const app = express();
+// 루트 경로 응답 (Vercel "GET /" 에러 해결)
+앱.get('/', (요청, 응답) => {
+  응답.send('GPTube MVP 서버가 정상 작동 중입니다.');
+});
+
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
