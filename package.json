@@ -1,16 +1,17 @@
 {
-  "name": "gptube_mvp",
+  "name": "gptune_mvp",
   "version": "1.0.0",
-  "description": "GPTube MVP WebRTC + Socket.io Server",
   "main": "server.js",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
+    "postinstall": "npm --prefix client install",
+    "build": "npm --prefix client run build",
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.19.2",
-    "socket.io": "^4.7.5"
-  },
-  "engines": {
-    "node": "22.x"
+    "express": "^4.19.2"
   }
 }
