@@ -1,59 +1,15 @@
-// GPTube MVP Server (WebRTC + Socket.io)
-
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-
+const express = require("express");
 const app = express();
 
-// Enable CORS for testing
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'Origin, X-Requested-With, Content-Type, Accept'
-  );
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  next();
+// Railway가 요구하는 PORT 자동 사용
+const PORT = process.env.PORT || 8080;
+
+// 기본 루트 응답 (Railway 502 방지)
+app.get("/", (req, res) => {
+  res.send("GPTube MVP Server is running successfully!");
 });
 
-// Serve static files from /public
-app.use(express.static('public'));
-
-// Root route
-app.get('/', (req, res) => {
-  res.send('✅ GPTube MVP server is running successfully.');
+// 서버 실행
+app.listen(PORT, "0.0.0.0", () => {
+  console.log("Server running on port", PORT);
 });
-
-// HTTP server
-const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*' } });
-
-// Socket.io events
-io.on('connection', (socket) => {
-  console.log(`🟢 Connected: ${socket.id}`);
-
-  socket.on('join', (room, nickname) => {
-    socket.join(room);
-    socket.data.nickname = nickname || `Guest-${socket.id.slice(0, 4)}`;
-    socket.to(room).emit('system', {
-      text: `${socket.data.nickname} joined the room.`,
-      ts: Date.now()
-    });
-  });
-
-  socket.on('message', (room, text) => {
-    io.to(room).emit('chat', {
-      nick: socket.data.nickname,
-      text,
-      ts: Date.now()
-    });
-  });
-
-  socket.on('disconnect', () => {
-    console.log(`🔴 Disconnected: ${socket.id}`);
-  });
-});
-
-const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
