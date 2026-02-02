@@ -1,20 +1,18 @@
 // server.js
-// GPTube MVP - Express + React(dist) + WebSocket Signaling Ready
+// GPTube MVP - Express + React(Vite dist) + WebSocket signaling (ready)
 
-const express = require("express");
 const path = require("path");
+const express = require("express");
 const http = require("http");
 const WebSocket = require("ws");
 
 const app = express();
 const server = http.createServer(app);
 
-// Railway는 반드시 PORT 환경변수를 사용해야 함
+// Railway는 반드시 PORT 환경변수 사용
 const PORT = process.env.PORT || 3000;
 
-/* ======================================================
-   1. Health Check API (Railway 상태 확인)
-====================================================== */
+// --- 1) Health Check (Railway 확인용)
 app.get("/health", (req, res) => {
   res.json({
     ok: true,
@@ -23,50 +21,49 @@ app.get("/health", (req, res) => {
   });
 });
 
-/* ======================================================
-   2. React(Vite) Build 결과 dist 폴더 서빙
-====================================================== */
-const clientDistPath = path.join(__dirname, "client", "dist");
+// --- 2) Static (Vite build output)
+// Vite build 결과: client/dist
+const distPath = path.join(__dirname, "client", "dist");
+app.use(express.static(distPath));
 
-// dist 폴더 정적 제공
-app.use(express.static(clientDistPath));
-
-// React SPA 라우팅 대응
+// --- 3) SPA fallback: React Router 대비
+// (정적 파일에 해당하지 않는 모든 GET 요청은 index.html로)
 app.get("*", (req, res) => {
-  res.sendFile(path.join(clientDistPath, "index.html"));
+  res.sendFile(path.join(distPath, "index.html"));
 });
 
-/* ======================================================
-   3. WebSocket Signaling Server (Step B 핵심)
-====================================================== */
+// --- 4) WebSocket signaling
 const wss = new WebSocket.Server({ server });
-
-let clients = [];
+const clients = new Set();
 
 wss.on("connection", (ws) => {
   console.log("✅ WebSocket client connected");
-  clients.push(ws);
+  clients.add(ws);
 
   ws.on("message", (message) => {
-    console.log("📩 Signal received:", message.toString());
+    const text = message.toString();
+    console.log("📩 Signal received:", text);
 
-    // 받은 메시지를 다른 모든 클라이언트에게 전달
-    clients.forEach((client) => {
+    // 자신 제외 브로드캐스트
+    for (const client of clients) {
       if (client !== ws && client.readyState === WebSocket.OPEN) {
-        client.send(message.toString());
+        client.send(text);
       }
-    });
+    }
   });
 
   ws.on("close", () => {
     console.log("❌ WebSocket client disconnected");
-    clients = clients.filter((c) => c !== ws);
+    clients.delete(ws);
+  });
+
+  ws.on("error", (err) => {
+    console.log("⚠️ WebSocket error:", err?.message || err);
   });
 });
 
-/* ======================================================
-   4. Start Server
-====================================================== */
+// --- 5) Start server
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 GPTube MVP running on port ${PORT}`);
+  console.log(`📦 Serving dist from: ${distPath}`);
 });
